@@ -4,6 +4,7 @@ const erh = @import("core/error_handling.zig").ErrorHandle;
 const Window = @import("core/window.zig").Window;
 const Input = @import("core/input.zig").Input;
 const GameProperties = @import("core/properties.zig").Properties;
+const GPU = @import("gpu/gpu_compute.zig").GPUCompute;
 
 const sdl = @cImport({
     @cInclude("SDL3/SDL.h");
@@ -30,5 +31,7 @@ pub fn main() !void {
     var input_handler = Input {};
 
     input_handler.pollForEvent();
-    
+   
+    var gpu = GPU {};
+    try gpu.createDevice();
 }
