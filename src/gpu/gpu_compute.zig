@@ -10,7 +10,7 @@ pub const GPUCompute = struct {
     gpu_context: ?*sdl.SDL_GPUDevice = null,
 
     pub fn createDevice(self: *GPUCompute) !void {
-        self.gpu_context = sdl.SDL_CreateGPUDevice(sdl.SDL_GPU_SHADERFORMAT_SPIRV, true, null);
+        self.gpu_context = sdl.SDL_CreateGPUDevice(sdl.SDL_GPU_SHADERFORMAT_SPIRV, true, "vulkan");
         if (self.gpu_context == null) {
             std.log.err("Failed to create GPU context! {s}.", .{Error.sdlError()});
             return error.FailedToCreateContext;
