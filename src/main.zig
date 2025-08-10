@@ -1,6 +1,7 @@
 const std = @import("std");
 const erh = @import("error_handling.zig").ErrorHandle;
 const Window = @import("window.zig").Window;
+const Input = @import("input.zig").Input;
 
 const sdl = @cImport({
     @cInclude("SDL3/SDL.h");
@@ -17,6 +18,8 @@ const GameProperties = struct {
     app_identifier: [:0]const u8 = "com.app.mobilebouncegame",
 };
 
+var event: sdl.SDL_Event = undefined;
+
 pub fn main() !void {    
     const game_props = comptime GameProperties {};
     var win_ren = Window {};
@@ -31,6 +34,12 @@ pub fn main() !void {
     try win_ren.renderClear();
     try win_ren.renderPresent();
 
-    while (true) {}
+    while (true) {
+        if (sdl.SDL_PollEvent(&event)) {
+            if (event.type == sdl.SDL_EVENT_QUIT) {
+                break;
+            }
+        }
+    }
     
 }
