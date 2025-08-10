@@ -18,7 +18,6 @@ const GameProperties = struct {
     app_identifier: [:0]const u8 = "com.app.mobilebouncegame",
 };
 
-var event: sdl.SDL_Event = undefined;
 
 pub fn main() !void {    
     const game_props = comptime GameProperties {};
@@ -34,12 +33,8 @@ pub fn main() !void {
     try win_ren.renderClear();
     try win_ren.renderPresent();
 
-    while (true) {
-        if (sdl.SDL_PollEvent(&event)) {
-            if (event.type == sdl.SDL_EVENT_QUIT) {
-                break;
-            }
-        }
-    }
+    var input_handler = Input {};
+
+    input_handler.pollForEvent();
     
 }
