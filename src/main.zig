@@ -5,6 +5,7 @@ const Window = @import("core/window.zig").Window;
 const Input = @import("core/input.zig").Input;
 const GameProperties = @import("core/properties.zig").Properties;
 const GPU = @import("gpu/gpu_compute.zig").GPUCompute;
+const Logger = @import("core/logger.zig").Logger;
 
 const sdl = @cImport({
     @cInclude("SDL3/SDL.h");
@@ -12,6 +13,11 @@ const sdl = @cImport({
 });
 
 pub fn main() !void {    
+
+    const log_file = try Logger.createLog();
+    std.log.debug("Log File: {any}", .{log_file});
+    
+
     const game_props = comptime GameProperties {};
     var win_ren = Window {
         .window_height = 720,
