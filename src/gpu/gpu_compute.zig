@@ -14,6 +14,7 @@ const shader_create_info: sdl.SDL_GPUShaderCreateInfo = .{
 
 pub const GPUCompute = struct {
     gpu_context: ?*sdl.SDL_GPUDevice = null,
+    enable_validation_layers: bool = true,
 
     pub fn startGPU(self: *GPUCompute, window: ?*sdl.SDL_Window) !void {
         std.debug.assert(window != null);
@@ -24,7 +25,7 @@ pub const GPUCompute = struct {
     }
 
     fn createDevice(self: *GPUCompute) !void {
-        self.gpu_context = sdl.SDL_CreateGPUDevice(sdl.SDL_GPU_SHADERFORMAT_SPIRV, true, "vulkan");
+        self.gpu_context = sdl.SDL_CreateGPUDevice(sdl.SDL_GPU_SHADERFORMAT_SPIRV, self.enable_validation_layers, "vulkan");
         if (self.gpu_context == null) {
             std.log.err("Failed to create GPU context! {s}.", .{Error.sdlError()});
             return error.FailedToCreateContext;
