@@ -5,7 +5,9 @@ const Window = @import("core/window.zig").Window;
 const Input = @import("core/input.zig").Input;
 const GameProperties = @import("core/properties.zig").Properties;
 const GPU = @import("gpu/gpu_compute.zig").GPUCompute;
+
 const Logger = @import("core/logger.zig").Logger;
+const LogType = @import("core/logger.zig").LogType;
 
 const sdl = @cImport({
     @cInclude("SDL3/SDL.h");
@@ -14,9 +16,9 @@ const sdl = @cImport({
 
 pub fn main() !void {    
 
-    const log_file = try Logger.createLog();
-    std.log.debug("Log File: {any}", .{log_file});
-    
+    var log_file = Logger {};
+    try log_file.createLog();
+    try log_file.writeLog(LogType.Info, "Application started.\n");
 
     const game_props = comptime GameProperties {};
     var win_ren = Window {
