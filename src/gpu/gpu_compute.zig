@@ -6,11 +6,26 @@ const GPUError = error {
     FailedToCreateContext,
     CannotClaimWindow,
     FailedToCreateShaderObject,
+    FailedToCreateGPUBuffer,
 };
 
 const shader_create_info: sdl.SDL_GPUShaderCreateInfo = .{
     
 };
+
+const gpu_buffer_create_info: sdl.SDL_GPUBufferCreateInfo = .{
+
+};
+
+const gpu_transfer_buffer_location: sdl.SDL_GPUTransferBufferLocation = .{
+
+};
+
+const gpu_buffer_reigon: sdl.SDL_GPUBufferRegion = .{
+
+};
+
+var copy_pass: sdl.SDL_GPUCopyPass = undefined;
 
 pub const GPUCompute = struct {
     gpu_context: ?*sdl.SDL_GPUDevice = null,
@@ -22,6 +37,8 @@ pub const GPUCompute = struct {
         try self.createDevice();
         try self.claimWindow(window);
         try self.createShader();
+        try self.createGPUBuffer();
+        // uploadToGPUBuffer();
     }
 
     fn createDevice(self: *GPUCompute) !void {
@@ -30,6 +47,7 @@ pub const GPUCompute = struct {
             std.log.err("Failed to create GPU context! {s}.", .{Error.sdlError()});
             return error.FailedToCreateContext;
         }
+        std.log.debug("GPU Context: {any}", .{self.gpu_context});
     }
 
     fn claimWindow(self: *GPUCompute, window: ?*sdl.SDL_Window) !void {
@@ -45,5 +63,21 @@ pub const GPUCompute = struct {
             std.log.err("Failed to create shader object: {s}.", .{Error.sdlError()});
             return error.FailedToCreateShaderObject;
         }
+        std.log.debug("Shader: {any}", .{shader_object});
+    }
+
+    fn createGPUBuffer(self: *GPUCompute) !void {
+        const gpu_buffer = sdl.SDL_CreateGPUBuffer(self.gpu_context, &gpu_buffer_create_info);
+        if (gpu_buffer == null) {
+            std.log.err("Failed to create GPU buffer: {s}.", .{Error.sdlError()});
+            return error.FailedToCreateGPUBuffer;
+        }
+        std.log.debug("Shader: {any}", .{gpu_buffer});
+    }
+    fn uploadToGPUBuffer() void {
+        sdl.SDL_UploadToGPUBuffer(&copy_pass, &gpu_transfer_buffer_location, &gpu_buffer_reigon, true);
+    }
+    fn createGPUGraphicsPipeline() !void {
+        // TODO
     }
 };
