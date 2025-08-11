@@ -23,10 +23,14 @@ pub const Logger = struct {
             },
             .Warning => {
                 std.log.debug("Warning Logging.", .{});
+                _ = try self.log_file.write("WARNING: ");
+                _ = try self.log_file.write(message);
 
             },
             .Error => {
                 std.log.debug("Error Logging.", .{});
+                _ = try self.log_file.write("ERROR: ");
+                _ = try self.log_file.write(message);
 
             },
         }
