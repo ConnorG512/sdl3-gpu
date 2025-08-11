@@ -5,6 +5,11 @@ const sdl = @cImport(@cInclude("SDL3/SDL.h"));
 const GPUError = error {
     FailedToCreateContext,
     CannotClaimWindow,
+    FailedToCreateShaderObject,
+};
+
+const shader_create_info: sdl.SDL_GPUShaderCreateInfo = .{
+    
 };
 
 pub const GPUCompute = struct {
@@ -15,6 +20,7 @@ pub const GPUCompute = struct {
 
         try self.createDevice();
         try self.claimWindow(window);
+        try self.createShader();
     }
 
     fn createDevice(self: *GPUCompute) !void {
@@ -29,6 +35,14 @@ pub const GPUCompute = struct {
         const result = sdl.SDL_ClaimWindowForGPUDevice(self.gpu_context, window);
         if (!result) {
             return error.CannotClaimWindow;
+        }
+    }
+
+    fn createShader(self: *GPUCompute) !void {
+        const shader_object = sdl.SDL_CreateGPUShader(self.gpu_context, &shader_create_info);
+        if (shader_object == null) {
+            std.log.err("Failed to create shader object: {s}.", .{Error.sdlError()});
+            return error.FailedToCreateShaderObject;
         }
     }
 };
