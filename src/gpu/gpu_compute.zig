@@ -9,9 +9,6 @@ const GPUError = error {
     FailedToCreateGPUBuffer,
 };
 
-// const fragment_shader_file = @embedFile("../../shader/frag.spv");
-// const vertex_shader_file = @embedFile("../../shader/vert.spv");
-
 const shader_create_info: sdl.SDL_GPUShaderCreateInfo = .{
     .code = @embedFile("../shader/frag.spv").ptr,
     .code_size = @embedFile("../shader/frag.spv").len,
@@ -88,6 +85,10 @@ pub const GPUCompute = struct {
             return error.FailedToCreateGPUBuffer;
         }
         std.log.debug("Shader: {any}", .{gpu_buffer});
+    }
+
+    fn createGPUTransferBuffer(_: *GPUCompute) !void {
+
     }
     fn uploadToGPUBuffer() void {
         sdl.SDL_UploadToGPUBuffer(&copy_pass, &gpu_transfer_buffer_location, &gpu_buffer_reigon, true);
