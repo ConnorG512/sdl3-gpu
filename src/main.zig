@@ -33,5 +33,5 @@ pub fn main() !void {
     input_handler.pollForEvent();
    
     var gpu = GPU {};
-    try gpu.createDevice();
+    try gpu.startGPU(win_ren.window);
 }
