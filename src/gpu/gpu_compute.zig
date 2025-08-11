@@ -9,8 +9,20 @@ const GPUError = error {
     FailedToCreateGPUBuffer,
 };
 
+// const fragment_shader_file = @embedFile("../../shader/frag.spv");
+// const vertex_shader_file = @embedFile("../../shader/vert.spv");
+
 const shader_create_info: sdl.SDL_GPUShaderCreateInfo = .{
-    
+    .code = @embedFile("../shader/frag.spv").ptr,
+    .code_size = @embedFile("../shader/frag.spv").len,
+    .entrypoint = "main",
+    .format = sdl.SDL_GPU_SHADERFORMAT_SPIRV, 
+    .stage = sdl.SDL_GPU_SHADERSTAGE_FRAGMENT,
+    .num_samplers = 0,
+    .num_storage_buffers = 0,
+    .num_storage_textures = 0,
+    .num_uniform_buffers = 0,
+    .props = 0,
 };
 
 const gpu_buffer_create_info: sdl.SDL_GPUBufferCreateInfo = .{
