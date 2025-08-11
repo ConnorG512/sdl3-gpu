@@ -1,15 +1,34 @@
 const std = @import("std");
 
+pub const LogType = enum {
+    Info,
+    Warning,
+    Error,
+};
+
 pub const Logger = struct {
 
-    const LogType = enum {
-        Info,
-        Warning,
-        Error,
-    };
+    log_file: std.fs.File = undefined,
 
-    pub fn createLog() !std.fs.File {
+    pub fn createLog(self: *Logger) !void {
+         self.log_file = try std.fs.cwd().createFileZ("debug.log", std.fs.File.CreateFlags{ .read = false, .truncate = true });
+    }
 
-        return try std.fs.cwd().createFileZ("debug.log", std.fs.File.CreateFlags{ .read = false, .truncate = true });
+    pub fn writeLog(self: *Logger, log_type: LogType, message: []const u8) !void {
+        switch (log_type) {
+            .Info => {
+                std.log.debug("Info Logging.", .{});
+                _ = try self.log_file.write("INFO: ");
+                _ = try self.log_file.write(message);
+            },
+            .Warning => {
+                std.log.debug("Warning Logging.", .{});
+
+            },
+            .Error => {
+                std.log.debug("Error Logging.", .{});
+
+            },
+        }
     }
 };
