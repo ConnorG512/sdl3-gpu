@@ -26,11 +26,14 @@ const shader_create_info: sdl.SDL_GPUShaderCreateInfo = .{
 };
 
 const gpu_buffer_create_info: sdl.SDL_GPUBufferCreateInfo = .{
+    .usage = sdl.SDL_GPU_BUFFERUSAGE_VERTEX,
+    .size = @sizeOf([3]f32) * 3, // 3 verticies with 3 floats each
+    .props = 0,
 
 };
 
-const gpu_transfer_buffer_location: sdl.SDL_GPUTransferBufferLocation = .{
-
+var gpu_transfer_buffer_location: sdl.SDL_GPUTransferBufferLocation = .{
+    .offset = 0,
 };
 
 const gpu_buffer_reigon: sdl.SDL_GPUBufferRegion = .{
