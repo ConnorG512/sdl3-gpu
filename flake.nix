@@ -15,6 +15,7 @@
       buildInputs = with pkgs; [
         zig
         sdl3
+        shaderc
       ];
     };
 
