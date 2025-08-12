@@ -50,7 +50,7 @@ pub const GPUCompute = struct {
             std.log.err("Failed to create GPU context! {s}.", .{Error.sdlError()});
             return error.FailedToCreateContext;
         }
-        std.log.debug("GPU Context: {any}", .{self.gpu_context});
+        std.log.debug("GPU Context: {*}", .{self.gpu_context});
     }
 
     fn claimWindow(self: *GPUCompute, window: ?*sdl.SDL_Window) !void {
@@ -83,7 +83,7 @@ pub const GPUCompute = struct {
             std.log.err("Failed to create shader object: {s}.", .{Error.sdlError()});
             return error.FailedToCreateShaderObject;
         }
-        std.log.debug("Shader: {any}", .{shader_object});
+        std.log.debug("Shader: {*}", .{shader_object});
     }
 
     fn createGPUBuffer(self: *GPUCompute) !void {
@@ -98,7 +98,7 @@ pub const GPUCompute = struct {
             std.log.err("Failed to create GPU buffer: {s}.", .{Error.sdlError()});
             return error.FailedToCreateGPUBuffer;
         }
-        std.log.debug("Shader: {any}", .{self.gpu_buffer});
+        std.log.debug("Shader: {*}", .{self.gpu_buffer});
     }
 
     fn createGPUTransferBuffer(_: *GPUCompute) !void {
