@@ -21,10 +21,6 @@ const gpu_buffer_reigon: sdl.SDL_GPUBufferRegion = .{
     .offset = 0,
 };
 
-// var pipelineCreateInfo: sdl.SDL_GPUGraphicsPipelineCreateInfo = .{
-// }
-//
-
 fn ptrToEmbedFile(filepath: []const u8) []const u8 {
     const file = @embedFile(filepath); 
     return file;
@@ -84,7 +80,7 @@ pub const GPUCompute = struct {
         }
         return copy_pass.?;
     }
-// "../shader/frag.spv"
+
     fn createGPUShader(gpu_context: *sdl.SDL_GPUDevice, shader_file: []const u8, shader_stage: sdl.SDL_GPUShaderStage) GPUError!*sdl.SDL_GPUShader {
 
         const shader_create_info: sdl.SDL_GPUShaderCreateInfo = .{
