@@ -41,6 +41,7 @@ pub const GPUCompute = struct {
         _ = try createGPUBuffer(gpu_context);
         _ = try createGPUShader(gpu_context);
         uploadToGPUBuffer(copy_pass);
+        _ = try createGPUGraphicsPipeline(gpu_context);
     }
 
     fn createDevice(self: *GPUCompute) GPUError!*sdl.SDL_GPUDevice{
@@ -133,5 +134,6 @@ pub const GPUCompute = struct {
             std.log.err("Failed to create graphics_pipeline: {s}.", .{Error.sdlError()});
 
         }
+        return graphics_pipeline.?;
     }
 };
