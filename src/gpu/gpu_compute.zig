@@ -37,10 +37,10 @@ pub const GPUCompute = struct {
         const gpu_context = try self.createDevice();
         try claimWindow(gpu_context, window);
         const command_buffer = try aquireGPUCommandBuffer(gpu_context);
-        _ = try beginGPUCopyPass(command_buffer);
+        const copy_pass = try beginGPUCopyPass(command_buffer);
         _ = try createGPUBuffer(gpu_context);
         _ = try createGPUShader(gpu_context);
-        // uploadToGPUBuffer(copy_pass);
+        uploadToGPUBuffer(copy_pass);
     }
 
     fn createDevice(self: *GPUCompute) GPUError!*sdl.SDL_GPUDevice{
