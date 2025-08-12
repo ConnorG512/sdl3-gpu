@@ -34,8 +34,16 @@ var gpu_transfer_buffer_location: sdl.SDL_GPUTransferBufferLocation = .{
 };
 
 const gpu_buffer_reigon: sdl.SDL_GPUBufferRegion = .{
-
+    .buffer = undefined,
+    .offset = 0,
 };
+
+// var pipelineCreateInfo: sdl.SDL_GPUGraphicsPipelineCreateInfo = .{
+//     .target_info = .{
+//         .num_color_targets = 1,
+//         .color_target_descriptions = .{}
+//     },
+// }
 
 var copy_pass: sdl.SDL_GPUCopyPass = undefined;
 
@@ -48,7 +56,7 @@ pub const GPUCompute = struct {
 
         try self.createDevice();
         try self.claimWindow(window);
-        try self.createShader();
+        try self.createGPUShader();
         try self.createGPUBuffer();
         // uploadToGPUBuffer();
     }
@@ -69,7 +77,7 @@ pub const GPUCompute = struct {
         }
     }
 
-    fn createShader(self: *GPUCompute) !void {
+    fn createGPUShader(self: *GPUCompute) !void {
         const shader_object = sdl.SDL_CreateGPUShader(self.gpu_context, &shader_create_info);
         if (shader_object == null) {
             std.log.err("Failed to create shader object: {s}.", .{Error.sdlError()});
@@ -94,6 +102,6 @@ pub const GPUCompute = struct {
         sdl.SDL_UploadToGPUBuffer(&copy_pass, &gpu_transfer_buffer_location, &gpu_buffer_reigon, true);
     }
     fn createGPUGraphicsPipeline() !void {
-        // TODO
+
     }
 };
