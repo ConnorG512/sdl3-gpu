@@ -9,18 +9,6 @@ const GPUError = error {
     FailedToCreateGPUBuffer,
 };
 
-const shader_create_info: sdl.SDL_GPUShaderCreateInfo = .{
-    .code = @embedFile("../shader/frag.spv").ptr,
-    .code_size = @embedFile("../shader/frag.spv").len,
-    .entrypoint = "main",
-    .format = sdl.SDL_GPU_SHADERFORMAT_SPIRV, 
-    .stage = sdl.SDL_GPU_SHADERSTAGE_FRAGMENT,
-    .num_samplers = 0,
-    .num_storage_buffers = 0,
-    .num_storage_textures = 0,
-    .num_uniform_buffers = 0,
-    .props = 0,
-};
 
 const gpu_buffer_create_info: sdl.SDL_GPUBufferCreateInfo = .{
     .usage = sdl.SDL_GPU_BUFFERUSAGE_VERTEX,
@@ -80,6 +68,19 @@ pub const GPUCompute = struct {
     }
 
     fn createGPUShader(self: *GPUCompute) !void {
+        const shader_create_info: sdl.SDL_GPUShaderCreateInfo = .{
+            .code = @embedFile("../shader/frag.spv").ptr,
+            .code_size = @embedFile("../shader/frag.spv").len,
+            .entrypoint = "main",
+            .format = sdl.SDL_GPU_SHADERFORMAT_SPIRV, 
+            .stage = sdl.SDL_GPU_SHADERSTAGE_FRAGMENT,
+            .num_samplers = 0,
+            .num_storage_buffers = 0,
+            .num_storage_textures = 0,
+            .num_uniform_buffers = 0,
+            .props = 0,
+        };
+
         const shader_object = sdl.SDL_CreateGPUShader(self.gpu_context, &shader_create_info);
         if (shader_object == null) {
             std.log.err("Failed to create shader object: {s}.", .{Error.sdlError()});
