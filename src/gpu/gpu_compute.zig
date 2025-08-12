@@ -10,12 +10,6 @@ const GPUError = error {
 };
 
 
-const gpu_buffer_create_info: sdl.SDL_GPUBufferCreateInfo = .{
-    .usage = sdl.SDL_GPU_BUFFERUSAGE_VERTEX,
-    .size = @sizeOf([3]f32) * 3, // 3 verticies with 3 floats each
-    .props = 0,
-
-};
 
 var gpu_transfer_buffer_location: sdl.SDL_GPUTransferBufferLocation = .{
     .offset = 0,
@@ -38,6 +32,7 @@ var copy_pass: sdl.SDL_GPUCopyPass = undefined;
 pub const GPUCompute = struct {
     gpu_context: ?*sdl.SDL_GPUDevice = null,
     enable_validation_layers: bool = true,
+    gpu_buffer: ?*sdl.SDL_GPUBuffer = null,
 
     pub fn startGPU(self: *GPUCompute, window: ?*sdl.SDL_Window) !void {
         std.debug.assert(window != null);
@@ -92,12 +87,18 @@ pub const GPUCompute = struct {
     }
 
     fn createGPUBuffer(self: *GPUCompute) !void {
-        const gpu_buffer = sdl.SDL_CreateGPUBuffer(self.gpu_context, &gpu_buffer_create_info);
-        if (gpu_buffer == null) {
+        const gpu_buffer_create_info: sdl.SDL_GPUBufferCreateInfo = .{
+            .usage = sdl.SDL_GPU_BUFFERUSAGE_VERTEX,
+            .size = @sizeOf([3]f32) * 3, // 3 verticies with 3 floats each
+            .props = 0,
+        };
+
+        self.gpu_buffer = sdl.SDL_CreateGPUBuffer(self.gpu_context, &gpu_buffer_create_info);
+        if (self.gpu_buffer == null) {
             std.log.err("Failed to create GPU buffer: {s}.", .{Error.sdlError()});
             return error.FailedToCreateGPUBuffer;
         }
-        std.log.debug("Shader: {any}", .{gpu_buffer});
+        std.log.debug("Shader: {any}", .{self.gpu_buffer});
     }
 
     fn createGPUTransferBuffer(_: *GPUCompute) !void {
