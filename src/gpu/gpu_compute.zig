@@ -71,6 +71,8 @@ pub const GPUCompute = struct {
     }
 
     fn claimWindow(self: *GPUCompute, window: ?*sdl.SDL_Window) !void {
+        std.debug.assert(window != null);
+
         const result = sdl.SDL_ClaimWindowForGPUDevice(self.gpu_context, window);
         if (!result) {
             return error.CannotClaimWindow;
