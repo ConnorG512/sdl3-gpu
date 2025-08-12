@@ -68,9 +68,11 @@ pub const GPUCompute = struct {
     }
 
     fn createGPUShader(self: *GPUCompute) !void {
+        const shader_file = @embedFile("../shader/frag.spv");
+
         const shader_create_info: sdl.SDL_GPUShaderCreateInfo = .{
-            .code = @embedFile("../shader/frag.spv").ptr,
-            .code_size = @embedFile("../shader/frag.spv").len,
+            .code = shader_file.ptr,
+            .code_size = shader_file.len,
             .entrypoint = "main",
             .format = sdl.SDL_GPU_SHADERFORMAT_SPIRV, 
             .stage = sdl.SDL_GPU_SHADERSTAGE_FRAGMENT,
