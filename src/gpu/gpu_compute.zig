@@ -22,11 +22,13 @@ const gpu_buffer_reigon: sdl.SDL_GPUBufferRegion = .{
 };
 
 // var pipelineCreateInfo: sdl.SDL_GPUGraphicsPipelineCreateInfo = .{
-//     .target_info = .{
-//         .num_color_targets = 1,
-//         .color_target_descriptions = .{}
-//     },
 // }
+//
+
+fn ptrToEmbedFile(filepath: []const u8) []const u8 {
+    const file = @embedFile(filepath); 
+    return file;
+}
 
 pub const GPUCompute = struct {
     enable_validation_layers: bool = true,
@@ -39,9 +41,14 @@ pub const GPUCompute = struct {
         const command_buffer = try aquireGPUCommandBuffer(gpu_context);
         const copy_pass = try beginGPUCopyPass(command_buffer);
         _ = try createGPUBuffer(gpu_context);
-        _ = try createGPUShader(gpu_context);
+
+        const frag_file = comptime ptrToEmbedFile("../shader/vert.spv");
+        const vert_file = comptime ptrToEmbedFile("../shader/frag.spv");
+        const vertex_shader = try createGPUShader(gpu_context, vert_file, sdl.SDL_GPU_SHADERSTAGE_VERTEX);
+        const fragment_shader = try createGPUShader(gpu_context, frag_file, sdl.SDL_GPU_SHADERSTAGE_FRAGMENT);
+
         uploadToGPUBuffer(copy_pass);
-        _ = try createGPUGraphicsPipeline(gpu_context);
+        _ = try createGPUGraphicsPipeline(gpu_context, vertex_shader, fragment_shader);
     }
 
     fn createDevice(self: *GPUCompute) GPUError!*sdl.SDL_GPUDevice{
@@ -77,16 +84,15 @@ pub const GPUCompute = struct {
         }
         return copy_pass.?;
     }
-
-    fn createGPUShader(gpu_context: *sdl.SDL_GPUDevice) GPUError!*sdl.SDL_GPUShader {
-        const shader_file = @embedFile("../shader/frag.spv");
+// "../shader/frag.spv"
+    fn createGPUShader(gpu_context: *sdl.SDL_GPUDevice, shader_file: []const u8, shader_stage: sdl.SDL_GPUShaderStage) GPUError!*sdl.SDL_GPUShader {
 
         const shader_create_info: sdl.SDL_GPUShaderCreateInfo = .{
             .code = shader_file.ptr,
             .code_size = shader_file.len,
             .entrypoint = "main",
             .format = sdl.SDL_GPU_SHADERFORMAT_SPIRV, 
-            .stage = sdl.SDL_GPU_SHADERSTAGE_FRAGMENT,
+            .stage = shader_stage,
             .num_samplers = 0,
             .num_storage_buffers = 0,
             .num_storage_textures = 0,
@@ -125,8 +131,13 @@ pub const GPUCompute = struct {
     fn uploadToGPUBuffer(copy_pass: *sdl.SDL_GPUCopyPass) void {
         sdl.SDL_UploadToGPUBuffer(copy_pass, &gpu_transfer_buffer_location, &gpu_buffer_reigon, true);
     }
-    fn createGPUGraphicsPipeline(gpu_context: ?*sdl.SDL_GPUDevice) GPUError!*sdl.SDL_GPUGraphicsPipeline {
+    fn createGPUGraphicsPipeline(gpu_context: ?*sdl.SDL_GPUDevice, vertex_shader: *sdl.SDL_GPUShader, fragment_shader: *sdl.SDL_GPUShader) GPUError!*sdl.SDL_GPUGraphicsPipeline {
         const graphics_pipeline_create_info: sdl.SDL_GPUGraphicsPipelineCreateInfo = .{
+            .target_info = .{
+                .num_color_targets = 1,
+            },
+            .fragment_shader = fragment_shader,
+            .vertex_shader = vertex_shader,
         };
 
         const graphics_pipeline = sdl.SDL_CreateGPUGraphicsPipeline(gpu_context, &graphics_pipeline_create_info);
