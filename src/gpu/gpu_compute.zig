@@ -7,9 +7,10 @@ const GPUError = error {
     CannotClaimWindow,
     FailedToCreateShaderObject,
     FailedToCreateGPUBuffer,
+    FailedToAcquireCommandBuffer,
+    FailedToCreateGraphicsPipeline,
+    FailedToGetCopyPass,
 };
-
-
 
 var gpu_transfer_buffer_location: sdl.SDL_GPUTransferBufferLocation = .{
     .offset = 0,
@@ -27,42 +28,56 @@ const gpu_buffer_reigon: sdl.SDL_GPUBufferRegion = .{
 //     },
 // }
 
-var copy_pass: sdl.SDL_GPUCopyPass = undefined;
-
 pub const GPUCompute = struct {
-    gpu_context: ?*sdl.SDL_GPUDevice = null,
     enable_validation_layers: bool = true,
-    gpu_buffer: ?*sdl.SDL_GPUBuffer = null,
 
     pub fn startGPU(self: *GPUCompute, window: ?*sdl.SDL_Window) !void {
         std.debug.assert(window != null);
 
-        try self.createDevice();
-        try self.claimWindow(window);
-        try self.createGPUShader();
-        try self.createGPUBuffer();
-        // uploadToGPUBuffer();
+        const gpu_context = try self.createDevice();
+        try claimWindow(gpu_context, window);
+        const command_buffer = try aquireGPUCommandBuffer(gpu_context);
+        _ = try beginGPUCopyPass(command_buffer);
+        _ = try createGPUBuffer(gpu_context);
+        _ = try createGPUShader(gpu_context);
+        // uploadToGPUBuffer(copy_pass);
     }
 
-    fn createDevice(self: *GPUCompute) !void {
-        self.gpu_context = sdl.SDL_CreateGPUDevice(sdl.SDL_GPU_SHADERFORMAT_SPIRV, self.enable_validation_layers, "vulkan");
-        if (self.gpu_context == null) {
+    fn createDevice(self: *GPUCompute) GPUError!*sdl.SDL_GPUDevice{
+        const gpu_device_context = sdl.SDL_CreateGPUDevice(sdl.SDL_GPU_SHADERFORMAT_SPIRV, self.enable_validation_layers, "vulkan");
+        if (gpu_device_context == null) {
             std.log.err("Failed to create GPU context! {s}.", .{Error.sdlError()});
             return error.FailedToCreateContext;
         }
-        std.log.debug("GPU Context: {*}", .{self.gpu_context});
+        std.log.debug("GPU Context: {*}", .{gpu_device_context});
+        return gpu_device_context.?;
     }
-
-    fn claimWindow(self: *GPUCompute, window: ?*sdl.SDL_Window) !void {
-        std.debug.assert(window != null);
-
-        const result = sdl.SDL_ClaimWindowForGPUDevice(self.gpu_context, window);
+    
+    fn claimWindow(gpu_device_context: *sdl.SDL_GPUDevice, window: ?*sdl.SDL_Window) !void {
+        const result = sdl.SDL_ClaimWindowForGPUDevice(gpu_device_context, window);
         if (!result) {
             return error.CannotClaimWindow;
         }
     }
 
-    fn createGPUShader(self: *GPUCompute) !void {
+    fn aquireGPUCommandBuffer(gpu_context: *sdl.SDL_GPUDevice) GPUError!*sdl.SDL_GPUCommandBuffer {
+        const command_buffer = sdl.SDL_AcquireGPUCommandBuffer(gpu_context);
+        if (command_buffer == null) {
+            std.log.err("Failed to create GPU command buffer! {s}.", .{Error.sdlError()});
+            return error.FailedToAcquireCommandBuffer;
+        }
+        return command_buffer.?;
+    }
+
+    fn beginGPUCopyPass(command_buffer: *sdl.SDL_GPUCommandBuffer) GPUError!*sdl.SDL_GPUCopyPass {
+        const copy_pass = sdl.SDL_BeginGPUCopyPass(command_buffer);
+        if (copy_pass == null) {
+            return error.FailedToGetCopyPass;
+        }
+        return copy_pass.?;
+    }
+
+    fn createGPUShader(gpu_context: *sdl.SDL_GPUDevice) GPUError!*sdl.SDL_GPUShader {
         const shader_file = @embedFile("../shader/frag.spv");
 
         const shader_create_info: sdl.SDL_GPUShaderCreateInfo = .{
@@ -78,36 +93,45 @@ pub const GPUCompute = struct {
             .props = 0,
         };
 
-        const shader_object = sdl.SDL_CreateGPUShader(self.gpu_context, &shader_create_info);
+        const shader_object = sdl.SDL_CreateGPUShader(gpu_context, &shader_create_info);
         if (shader_object == null) {
             std.log.err("Failed to create shader object: {s}.", .{Error.sdlError()});
             return error.FailedToCreateShaderObject;
         }
         std.log.debug("Shader: {*}", .{shader_object});
+        return shader_object.?;
     }
 
-    fn createGPUBuffer(self: *GPUCompute) !void {
+    fn createGPUBuffer(gpu_context: *sdl.SDL_GPUDevice) GPUError!*sdl.SDL_GPUBuffer {
         const gpu_buffer_create_info: sdl.SDL_GPUBufferCreateInfo = .{
             .usage = sdl.SDL_GPU_BUFFERUSAGE_VERTEX,
             .size = @sizeOf([3]f32) * 3, // 3 verticies with 3 floats each
             .props = 0,
         };
 
-        self.gpu_buffer = sdl.SDL_CreateGPUBuffer(self.gpu_context, &gpu_buffer_create_info);
-        if (self.gpu_buffer == null) {
+        const gpu_buffer = sdl.SDL_CreateGPUBuffer(gpu_context, &gpu_buffer_create_info);
+        if (gpu_buffer == null) {
             std.log.err("Failed to create GPU buffer: {s}.", .{Error.sdlError()});
             return error.FailedToCreateGPUBuffer;
         }
-        std.log.debug("Shader: {*}", .{self.gpu_buffer});
+        std.log.debug("Shader: {*}", .{gpu_buffer});
+        return gpu_buffer.?;
     }
 
     fn createGPUTransferBuffer(_: *GPUCompute) !void {
 
     }
-    fn uploadToGPUBuffer() void {
-        sdl.SDL_UploadToGPUBuffer(&copy_pass, &gpu_transfer_buffer_location, &gpu_buffer_reigon, true);
+    fn uploadToGPUBuffer(copy_pass: *sdl.SDL_GPUCopyPass) void {
+        sdl.SDL_UploadToGPUBuffer(copy_pass, &gpu_transfer_buffer_location, &gpu_buffer_reigon, true);
     }
-    fn createGPUGraphicsPipeline() !void {
+    fn createGPUGraphicsPipeline(gpu_context: ?*sdl.SDL_GPUDevice) GPUError!*sdl.SDL_GPUGraphicsPipeline {
+        const graphics_pipeline_create_info: sdl.SDL_GPUGraphicsPipelineCreateInfo = .{
+        };
 
+        const graphics_pipeline = sdl.SDL_CreateGPUGraphicsPipeline(gpu_context, &graphics_pipeline_create_info);
+        if (graphics_pipeline == null) {
+            std.log.err("Failed to create graphics_pipeline: {s}.", .{Error.sdlError()});
+
+        }
     }
 };
