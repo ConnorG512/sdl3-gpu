@@ -148,18 +148,32 @@ pub const GPUCompute = struct {
     }
 
     fn createGPUGraphicsPipeline(gpu_context: ?*sdl.SDL_GPUDevice, vertex_shader: *sdl.SDL_GPUShader, fragment_shader: *sdl.SDL_GPUShader) GPUError!*sdl.SDL_GPUGraphicsPipeline {
+        std.debug.assert(gpu_context != null);
+
+        const color_target_blend_state: sdl.SDL_GPUColorTargetBlendState = .{
+            .enable_blend = false,
+
+        };
         const color_target_descriptions: sdl.SDL_GPUColorTargetDescription = .{
-            .blend_state = undefined,
             .format = sdl.SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM_SRGB,
+            .blend_state = color_target_blend_state,
         };
 
         const graphics_pipeline_create_info: sdl.SDL_GPUGraphicsPipelineCreateInfo = .{
             .target_info = .{
                 .num_color_targets = 1,
                 .color_target_descriptions = &color_target_descriptions,
+                .depth_stencil_format = undefined,
+                .has_depth_stencil_target = undefined,
             },
             .fragment_shader = fragment_shader,
             .vertex_shader = vertex_shader,
+            .depth_stencil_state = undefined,
+            .multisample_state = undefined,
+            .primitive_type = undefined,
+            .rasterizer_state = undefined,
+            .vertex_input_state = undefined,
+            .props = 0,
         };
 
         const graphics_pipeline = sdl.SDL_CreateGPUGraphicsPipeline(gpu_context, &graphics_pipeline_create_info);
