@@ -14,11 +14,6 @@ const GPUError = error {
 };
 
 
-const gpu_buffer_reigon: sdl.SDL_GPUBufferRegion = .{
-    .buffer = undefined,
-    .offset = 0,
-};
-
 fn ptrToEmbedFile(filepath: []const u8) []const u8 {
     const file = @embedFile(filepath); 
     return file;
@@ -34,7 +29,7 @@ pub const GPUCompute = struct {
         try claimWindow(gpu_context, window);
         const command_buffer = try aquireGPUCommandBuffer(gpu_context);
         const copy_pass = try beginGPUCopyPass(command_buffer);
-        _ = try createGPUBuffer(gpu_context);
+        const gpu_buffer = try createGPUBuffer(gpu_context);
 
         const frag_file = comptime ptrToEmbedFile("../shader/vert.spv");
         const vert_file = comptime ptrToEmbedFile("../shader/frag.spv");
@@ -42,7 +37,7 @@ pub const GPUCompute = struct {
         const fragment_shader = try createGPUShader(gpu_context, frag_file, sdl.SDL_GPU_SHADERSTAGE_FRAGMENT);
         const transfer_buffer = try createGPUTransferBuffer(gpu_context);
 
-        uploadToGPUBuffer(copy_pass, transfer_buffer);
+        uploadToGPUBuffer(copy_pass, transfer_buffer, gpu_buffer);
         _ = try createGPUGraphicsPipeline(gpu_context, vertex_shader, fragment_shader);
     }
 
@@ -135,12 +130,18 @@ pub const GPUCompute = struct {
         return transfer_buffer.?;
     }
 
-    fn uploadToGPUBuffer(copy_pass: *sdl.SDL_GPUCopyPass, transfer_buffer: ?*sdl.SDL_GPUTransferBuffer) void {
+    fn uploadToGPUBuffer(copy_pass: *sdl.SDL_GPUCopyPass, transfer_buffer: ?*sdl.SDL_GPUTransferBuffer, gpu_buffer: *sdl.SDL_GPUBuffer) void {
         std.debug.assert(transfer_buffer != null);
+        const gpu_buffer_reigon_size: u32 = comptime 4096; 
 
-        var gpu_transfer_buffer_location: sdl.SDL_GPUTransferBufferLocation = .{
+        const gpu_transfer_buffer_location: sdl.SDL_GPUTransferBufferLocation = .{
             .offset = 0,
             .transfer_buffer = transfer_buffer,
+        };
+        const gpu_buffer_reigon: sdl.SDL_GPUBufferRegion = .{
+            .offset = 0,
+            .buffer = gpu_buffer,
+            .size = gpu_buffer_reigon_size,
         };
 
         sdl.SDL_UploadToGPUBuffer(copy_pass, &gpu_transfer_buffer_location, &gpu_buffer_reigon, true);
