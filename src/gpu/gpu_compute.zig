@@ -150,29 +150,50 @@ pub const GPUCompute = struct {
     fn createGPUGraphicsPipeline(gpu_context: ?*sdl.SDL_GPUDevice, vertex_shader: *sdl.SDL_GPUShader, fragment_shader: *sdl.SDL_GPUShader) GPUError!*sdl.SDL_GPUGraphicsPipeline {
         std.debug.assert(gpu_context != null);
 
-        const color_target_blend_state: sdl.SDL_GPUColorTargetBlendState = .{
-            .enable_blend = false,
-
-        };
-        const color_target_descriptions: sdl.SDL_GPUColorTargetDescription = .{
-            .format = sdl.SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM_SRGB,
-            .blend_state = color_target_blend_state,
-        };
-
         const graphics_pipeline_create_info: sdl.SDL_GPUGraphicsPipelineCreateInfo = .{
             .target_info = .{
                 .num_color_targets = 1,
-                .color_target_descriptions = &color_target_descriptions,
-                .depth_stencil_format = undefined,
-                .has_depth_stencil_target = undefined,
+                .color_target_descriptions = .{
+                    .blend_state = .{
+                        .enable_blend = false,
+                    },
+                }
             },
-            .fragment_shader = fragment_shader,
-            .vertex_shader = vertex_shader,
-            .depth_stencil_state = undefined,
-            .multisample_state = undefined,
+
+            .vertex_shader = &vertex_shader,
+            .fragment_shader = &fragment_shader,
+
+            .depth_stencil_state = .{
+                .compare_op = undefined,
+                .back_stencil_state = undefined,
+                .enable_stencil_test = undefined,
+                .enable_depth_write = undefined,
+                .enable_depth_test = undefined,
+                .compare_mask = undefined,
+                .front_stencil_state = undefined,
+                .write_mask = undefined,
+            },
+            
+            .vertex_input_state = .{
+                .num_vertex_attributes = undefined,
+                .num_vertex_buffers = undefined,
+                .vertex_attributes = undefined,
+                .vertex_buffer_descriptions = undefined,
+            },
+
+            .rasterizer_state = .{
+                .cull_mode = undefined,
+                .depth_bias_clamp = undefined,
+                .depth_bias_constant_factor = undefined,
+                .depth_bias_slope_factor = undefined,
+                .enable_depth_bias = undefined,
+                .enable_depth_clip = undefined,
+                .fill_mode = undefined,
+                .front_face = undefined,
+            },
+            
             .primitive_type = undefined,
-            .rasterizer_state = undefined,
-            .vertex_input_state = undefined,
+            .multisample_state = undefined,
             .props = 0,
         };
 
