@@ -147,21 +147,15 @@ pub const GPUCompute = struct {
         sdl.SDL_UploadToGPUBuffer(copy_pass, &gpu_transfer_buffer_location, &gpu_buffer_reigon, true);
     }
 
-    fn createGPUGraphicsPipeline(gpu_context: ?*sdl.SDL_GPUDevice, vertex_shader: *sdl.SDL_GPUShader, fragment_shader: *sdl.SDL_GPUShader) GPUError!*sdl.SDL_GPUGraphicsPipeline {
-        std.debug.assert(gpu_context != null);
+    fn createGPUGraphicsPipeline(gpu_context: *sdl.SDL_GPUDevice, vertex_shader: *sdl.SDL_GPUShader, fragment_shader: *sdl.SDL_GPUShader) GPUError!*sdl.SDL_GPUGraphicsPipeline {
 
         const graphics_pipeline_create_info: sdl.SDL_GPUGraphicsPipelineCreateInfo = .{
             .target_info = .{
                 .num_color_targets = 1,
-                .color_target_descriptions = .{
-                    .blend_state = .{
-                        .enable_blend = false,
-                    },
-                }
             },
 
-            .vertex_shader = &vertex_shader,
-            .fragment_shader = &fragment_shader,
+            .vertex_shader = vertex_shader,
+            .fragment_shader = fragment_shader,
 
             .depth_stencil_state = .{
                 .compare_op = undefined,
