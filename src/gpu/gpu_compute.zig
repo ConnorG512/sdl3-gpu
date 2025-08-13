@@ -13,10 +13,6 @@ const GPUError = error {
     FailedToCreateTransferBuffer,
 };
 
-var gpu_transfer_buffer_location: sdl.SDL_GPUTransferBufferLocation = .{
-    .offset = 0,
-    .transfer_buffer = undefined,
-};
 
 const gpu_buffer_reigon: sdl.SDL_GPUBufferRegion = .{
     .buffer = undefined,
@@ -44,9 +40,9 @@ pub const GPUCompute = struct {
         const vert_file = comptime ptrToEmbedFile("../shader/frag.spv");
         const vertex_shader = try createGPUShader(gpu_context, vert_file, sdl.SDL_GPU_SHADERSTAGE_VERTEX);
         const fragment_shader = try createGPUShader(gpu_context, frag_file, sdl.SDL_GPU_SHADERSTAGE_FRAGMENT);
-        _= try createGPUTransferBuffer(gpu_context);
+        const transfer_buffer = try createGPUTransferBuffer(gpu_context);
 
-        uploadToGPUBuffer(copy_pass);
+        uploadToGPUBuffer(copy_pass, transfer_buffer);
         _ = try createGPUGraphicsPipeline(gpu_context, vertex_shader, fragment_shader);
     }
 
@@ -139,7 +135,14 @@ pub const GPUCompute = struct {
         return transfer_buffer.?;
     }
 
-    fn uploadToGPUBuffer(copy_pass: *sdl.SDL_GPUCopyPass) void {
+    fn uploadToGPUBuffer(copy_pass: *sdl.SDL_GPUCopyPass, transfer_buffer: ?*sdl.SDL_GPUTransferBuffer) void {
+        std.debug.assert(transfer_buffer != null);
+
+        var gpu_transfer_buffer_location: sdl.SDL_GPUTransferBufferLocation = .{
+            .offset = 0,
+            .transfer_buffer = transfer_buffer,
+        };
+
         sdl.SDL_UploadToGPUBuffer(copy_pass, &gpu_transfer_buffer_location, &gpu_buffer_reigon, true);
     }
 
@@ -150,7 +153,6 @@ pub const GPUCompute = struct {
             },
             .fragment_shader = fragment_shader,
             .vertex_shader = vertex_shader,
-            
         };
 
         const graphics_pipeline = sdl.SDL_CreateGPUGraphicsPipeline(gpu_context, &graphics_pipeline_create_info);
