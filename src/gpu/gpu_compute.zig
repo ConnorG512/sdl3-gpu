@@ -10,10 +10,12 @@ const GPUError = error {
     FailedToAcquireCommandBuffer,
     FailedToCreateGraphicsPipeline,
     FailedToGetCopyPass,
+    FailedToCreateTransferBuffer,
 };
 
 var gpu_transfer_buffer_location: sdl.SDL_GPUTransferBufferLocation = .{
     .offset = 0,
+    .transfer_buffer = undefined,
 };
 
 const gpu_buffer_reigon: sdl.SDL_GPUBufferRegion = .{
@@ -42,6 +44,7 @@ pub const GPUCompute = struct {
         const vert_file = comptime ptrToEmbedFile("../shader/frag.spv");
         const vertex_shader = try createGPUShader(gpu_context, vert_file, sdl.SDL_GPU_SHADERSTAGE_VERTEX);
         const fragment_shader = try createGPUShader(gpu_context, frag_file, sdl.SDL_GPU_SHADERSTAGE_FRAGMENT);
+        _= try createGPUTransferBuffer(gpu_context);
 
         uploadToGPUBuffer(copy_pass);
         _ = try createGPUGraphicsPipeline(gpu_context, vertex_shader, fragment_shader);
@@ -121,12 +124,25 @@ pub const GPUCompute = struct {
         return gpu_buffer.?;
     }
 
-    fn createGPUTransferBuffer(_: *GPUCompute) !void {
-
+    fn createGPUTransferBuffer(gpu_context: *sdl.SDL_GPUDevice) GPUError!*sdl.SDL_GPUTransferBuffer {
+        const transfer_buffer_create_info: sdl.SDL_GPUTransferBufferCreateInfo = .{
+            .props = 0,
+            .size = 4096,
+            .usage = sdl.SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+        };
+        const transfer_buffer = sdl.SDL_CreateGPUTransferBuffer(gpu_context, &transfer_buffer_create_info);
+        if (transfer_buffer == null) {
+            std.log.err("Failed to create Transfer Buffer: {s}.", .{Error.sdlError()});
+            return error.FailedToCreateTransferBuffer;
+        }
+        std.log.debug("Transfer Buffer: {*}", .{transfer_buffer});
+        return transfer_buffer.?;
     }
+
     fn uploadToGPUBuffer(copy_pass: *sdl.SDL_GPUCopyPass) void {
         sdl.SDL_UploadToGPUBuffer(copy_pass, &gpu_transfer_buffer_location, &gpu_buffer_reigon, true);
     }
+
     fn createGPUGraphicsPipeline(gpu_context: ?*sdl.SDL_GPUDevice, vertex_shader: *sdl.SDL_GPUShader, fragment_shader: *sdl.SDL_GPUShader) GPUError!*sdl.SDL_GPUGraphicsPipeline {
         const graphics_pipeline_create_info: sdl.SDL_GPUGraphicsPipelineCreateInfo = .{
             .target_info = .{
@@ -134,6 +150,7 @@ pub const GPUCompute = struct {
             },
             .fragment_shader = fragment_shader,
             .vertex_shader = vertex_shader,
+            
         };
 
         const graphics_pipeline = sdl.SDL_CreateGPUGraphicsPipeline(gpu_context, &graphics_pipeline_create_info);
@@ -143,4 +160,5 @@ pub const GPUCompute = struct {
         }
         return graphics_pipeline.?;
     }
+
 };
