@@ -155,11 +155,18 @@ pub const GPUCompute = struct {
             }
         }; 
 
+        const gpu_vertex_attributes: sdl.SDL_GPUVertexAttribute = .{
+            .buffer_slot = undefined,
+            .format = undefined,
+            .location = undefined,
+            .offset = undefined,
+        };
+
         const graphics_pipeline_create_info: sdl.SDL_GPUGraphicsPipelineCreateInfo = .{
             .target_info = .{
                 .num_color_targets = 1,
                 .has_depth_stencil_target = false,
-                .depth_stencil_format = undefined,
+                .depth_stencil_format = sdl.SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM_SRGB,
                 .color_target_descriptions = &color_target_descriptions,
             },
 
@@ -178,9 +185,9 @@ pub const GPUCompute = struct {
             },
             
             .vertex_input_state = .{
-                .num_vertex_attributes = undefined,
-                .num_vertex_buffers = undefined,
-                .vertex_attributes = undefined,
+                .num_vertex_attributes = 3,
+                .num_vertex_buffers = 3,
+                .vertex_attributes = &gpu_vertex_attributes,
                 .vertex_buffer_descriptions = undefined,
             },
 
