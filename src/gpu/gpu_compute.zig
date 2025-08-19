@@ -166,7 +166,7 @@ pub const GPUCompute = struct {
             .target_info = .{
                 .num_color_targets = 1,
                 .has_depth_stencil_target = false,
-                .depth_stencil_format = sdl.SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM_SRGB,
+                .depth_stencil_format = sdl.SDL_GPU_TEXTUREFORMAT_A8_UNORM,
                 .color_target_descriptions = &color_target_descriptions,
             },
 
