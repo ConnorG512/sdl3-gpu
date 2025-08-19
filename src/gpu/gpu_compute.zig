@@ -149,9 +149,18 @@ pub const GPUCompute = struct {
 
     fn createGPUGraphicsPipeline(gpu_context: *sdl.SDL_GPUDevice, vertex_shader: *sdl.SDL_GPUShader, fragment_shader: *sdl.SDL_GPUShader) GPUError!*sdl.SDL_GPUGraphicsPipeline {
 
+        const color_target_descriptions: sdl.SDL_GPUColorTargetDescription = .{
+            .blend_state = .{
+                .enable_blend = false,
+            }
+        }; 
+
         const graphics_pipeline_create_info: sdl.SDL_GPUGraphicsPipelineCreateInfo = .{
             .target_info = .{
                 .num_color_targets = 1,
+                .has_depth_stencil_target = false,
+                .depth_stencil_format = undefined,
+                .color_target_descriptions = &color_target_descriptions,
             },
 
             .vertex_shader = vertex_shader,
