@@ -35,7 +35,7 @@ pub const GPUCompute = struct {
         try claimWindow(self.gpu_context, self.application_window);
         
         // Embedding shaders
-        const frag_file = comptime ptrToEmbedFile("../shader/frag.spv");
+        const frag_file = comptime ptrToEmbedFile("../shader/background.frag.spv");
         const vert_file = comptime ptrToEmbedFile("../shader/vert.spv");
 
         // Create shaders
