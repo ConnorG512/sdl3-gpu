@@ -14,6 +14,7 @@ const GPUError = error {
     FailedToCreateTransferBuffer,
     FailedToCreateFillPipeline,
     FailedToCreateLinePipeline,
+    FailedToCreateSwapchainTexture,
 };
 
 
@@ -49,7 +50,9 @@ pub const GPUCompute = struct {
         const transfer_buffer = try createGPUTransferBuffer(gpu_context);
 
         uploadToGPUBuffer(copy_pass, transfer_buffer, gpu_buffer);
-        _ = try createGPUGraphicsPipeline(gpu_context, window_ptr, vertex_shader, fragment_shader);
+        const graphics_pipeline = try createGPUGraphicsPipeline(gpu_context, window_ptr, vertex_shader, fragment_shader);
+        
+        try drawSwapchain(command_buffer, window_ptr, graphics_pipeline);
     }
 
     fn createDevice(self: *GPUCompute) GPUError!*sdl.SDL_GPUDevice{
@@ -184,18 +187,50 @@ pub const GPUCompute = struct {
 
         const graphics_pipeline = sdl.SDL_CreateGPUGraphicsPipeline(gpu_context, &graphics_pipeline_create_info);
         if (graphics_pipeline == null) {
-            std.log.err("Failed to create graphics_pipeline: {s}.", .{Error.sdlError()});
+            std.log.err("Failed to create graphics pipeline: {s}.", .{Error.sdlError()});
             return error.FailedToCreateGraphicsPipeline;
         }
 
         graphics_pipeline_create_info.rasterizer_state.fill_mode = sdl.SDL_GPU_FILLMODE_LINE;
         const line_pipeline = sdl.SDL_CreateGPUGraphicsPipeline(gpu_context, &graphics_pipeline_create_info);
         if (line_pipeline == null) {
-            std.log.err("Failed to create graphics_pipeline: {s}.", .{Error.sdlError()});
+            std.log.err("Failed to create line pipeline: {s}.", .{Error.sdlError()});
             return error.FailedToCreateLinePipeline;
         }
 
         return graphics_pipeline.?;
+    }
+
+    fn drawSwapchain(command_buffer: *sdl.SDL_GPUCommandBuffer, window: *sdl.SDL_Window, graphics_pipeline: *sdl.SDL_GPUGraphicsPipeline) !void {
+        var swapchain_texture: ?*sdl.SDL_GPUTexture = null;
+
+        if(!sdl.SDL_WaitAndAcquireGPUSwapchainTexture(command_buffer, window, &swapchain_texture, null, null)) {
+            std.log.err("Failed to create wait and aquire swapchain: {s}.", .{Error.sdlError()});
+            return error.FailedToCreateSwapchainTexture;
+        }
+
+        if (swapchain_texture != null) {
+            const color_target_info: sdl.SDL_GPUColorTargetInfo = .{
+                .texture = swapchain_texture,
+                .clear_color = .{.a = 1.0, .b = 0.0, .g = 0.0, .r = 0.0 },
+                .load_op = sdl.SDL_GPU_LOADOP_CLEAR,
+                .store_op = sdl.SDL_GPU_STOREOP_STORE,
+            };
+
+            const num_color_targets: u32 = comptime 1;
+            const render_pass: ?*sdl.SDL_GPURenderPass = sdl.SDL_BeginGPURenderPass(command_buffer, &color_target_info, num_color_targets, null);
+            sdl.SDL_BindGPUGraphicsPipeline(render_pass, graphics_pipeline);
+            
+            const num_vertices: u32 = comptime 3;
+            const num_instances: u32 = comptime 1;
+            const first_vertex: u32 = comptime 0;
+            const first_instance: u32 = comptime 0;
+
+            sdl.SDL_DrawGPUPrimitives(render_pass, num_vertices, num_instances, first_vertex, first_instance);
+        }
+
+        _ = sdl.SDL_SubmitGPUCommandBuffer(command_buffer);
+
     }
 
     fn releaseShaders(gpu_context: *sdl.SDL_GPUDevice, shader: *sdl.SDL_GPUShader) void {
