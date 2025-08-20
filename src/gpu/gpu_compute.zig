@@ -55,7 +55,7 @@ pub const GPUCompute = struct {
         
         try drawSwapchain(command_buffer, window_ptr, graphics_pipeline);
 
-        GPUQuit(gpu_context, window_ptr);
+        // GPUQuit(gpu_context, window_ptr);
     }
 
     fn createDevice(self: *GPUCompute) GPUError!*sdl.SDL_GPUDevice{
