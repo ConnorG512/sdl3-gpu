@@ -53,6 +53,8 @@ pub const GPUCompute = struct {
         const graphics_pipeline = try createGPUGraphicsPipeline(gpu_context, window_ptr, vertex_shader, fragment_shader);
         
         try drawSwapchain(command_buffer, window_ptr, graphics_pipeline);
+
+        GPUQuit(gpu_context, window_ptr);
     }
 
     fn createDevice(self: *GPUCompute) GPUError!*sdl.SDL_GPUDevice{
@@ -235,6 +237,12 @@ pub const GPUCompute = struct {
 
     fn releaseShaders(gpu_context: *sdl.SDL_GPUDevice, shader: *sdl.SDL_GPUShader) void {
         sdl.SDL_ReleaseGPUShader(gpu_context, shader);
+    }
+
+    fn GPUQuit(gpu_context: *sdl.SDL_GPUDevice, window: *sdl.SDL_Window) void {
+        sdl.SDL_ReleaseWindowFromGPUDevice(gpu_context, window);
+        sdl.SDL_DestroyWindow(window);
+        sdl.SDL_DestroyGPUDevice(gpu_context);
     }
 
 };
