@@ -43,10 +43,9 @@ pub fn main() !void {
 
     var input_handler = Input {};
 
-    while (true) {
-        input_handler.pollForEvent();
+    var application_running: bool = true;
+    while (application_running) {
+        input_handler.pollForEvent(&application_running);
         try gpu.renderLoop();
     }
-
-   
 }
