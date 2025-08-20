@@ -221,6 +221,7 @@ pub const GPUCompute = struct {
             const first_instance: u32 = comptime 0;
 
             sdl.SDL_DrawGPUPrimitives(render_pass, num_vertices, num_instances, first_vertex, first_instance);
+            sdl.SDL_EndGPURenderPass(render_pass);
         }
 
         _ = sdl.SDL_SubmitGPUCommandBuffer(command_buffer);
