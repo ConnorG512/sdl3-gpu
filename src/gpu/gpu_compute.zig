@@ -39,8 +39,8 @@ pub const GPUCompute = struct {
         const copy_pass = try beginGPUCopyPass(command_buffer);
         const gpu_buffer = try createGPUBuffer(gpu_context);
 
-        const frag_file = comptime ptrToEmbedFile("../shader/vert.spv");
-        const vert_file = comptime ptrToEmbedFile("../shader/frag.spv");
+        const frag_file = comptime ptrToEmbedFile("../shader/frag.spv");
+        const vert_file = comptime ptrToEmbedFile("../shader/vert.spv");
 
         const vertex_shader = try createGPUShader(gpu_context, vert_file, sdl.SDL_GPU_SHADERSTAGE_VERTEX);
         defer releaseShaders(gpu_context, vertex_shader);
@@ -187,6 +187,7 @@ pub const GPUCompute = struct {
             std.log.err("Failed to create fill pipeline: {s}", .{Error.sdlError()});
             return error.FailedToCreateFillPipeline;
         }
+        std.log.debug("Fill Pipeline: {*}.", .{fill_pipeline});
 
         return fill_pipeline.?;
     }
