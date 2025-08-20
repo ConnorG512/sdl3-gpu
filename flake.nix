@@ -13,14 +13,25 @@
   {
     devShells.${system}.default = pkgs.mkShell {
       buildInputs = with pkgs; [
+        vulkan-loader
+        vulkan-validation-layers
         zig
         sdl3
         shaderc
+        lldb
+        renderdoc
       ];
     };
 
     shellHook = ''
       echo "Entering shell..."
+      export LD_LIBRARY_PATH"${
+        pkgs.lib.makeLibraryPath [
+            pkgs.vulkan-loader 
+            pkgs.vulkan-validation-layers 
+        ]
+      }"
+      export VK_LAYER_PATH="${pkgs.vulkan-validation-layers}/share/vulkan/explicit_layer.d";
     '';
   };
 }
