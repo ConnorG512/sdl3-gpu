@@ -1,5 +1,5 @@
 {
-  description = "Bouncing game mobile game flake.";
+  description = "SDL3 Application.";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
