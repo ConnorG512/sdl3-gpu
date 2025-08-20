@@ -36,9 +36,9 @@ pub const Window = struct {
         }
     }
 
-    pub fn createWinRen(self: *Window, ) !void {
+    pub fn createWinRen(self: *Window) !void {
         const win_ren_result = sdl.SDL_CreateWindowAndRenderer(
-            self.window_title, self.window_width, self.window_height, 0, &self.window, &self.renderer);
+            self.window_title, self.window_width, self.window_height, sdl.SDL_WINDOW_VULKAN, &self.window, &self.renderer);
         
         if (!win_ren_result) {
             std.log.err("SDL Error: {s}.", .{erh.sdlError()});
