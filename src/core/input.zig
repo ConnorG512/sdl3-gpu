@@ -4,11 +4,9 @@ pub const Input = struct {
     current_event: sdl.SDL_Event = undefined,
 
     pub fn pollForEvent(self: *Input) void {
-        while (true) {
-            if (sdl.SDL_PollEvent(&self.current_event)) {
-                if (self.current_event.type == sdl.SDL_EVENT_QUIT) {
-                    break;
-                }
+        if (sdl.SDL_PollEvent(&self.current_event)) {
+            if (self.current_event.type == sdl.SDL_EVENT_QUIT) {
+                // Quit
             }
         }
     }
