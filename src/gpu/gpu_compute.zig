@@ -54,7 +54,7 @@ pub const GPUCompute = struct {
         
         try drawSwapchain(command_buffer, window_ptr, graphics_pipeline);
 
-        GPUQuit(gpu_context, window_ptr);
+        // GPUQuit(gpu_context, window_ptr);
     }
 
     fn createDevice(self: *GPUCompute) GPUError!*sdl.SDL_GPUDevice{
@@ -178,29 +178,16 @@ pub const GPUCompute = struct {
             .primitive_type = sdl.SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
             .vertex_shader = vertex_shader,
             .fragment_shader = fragment_shader,
+            .rasterizer_state = .{ .fill_mode = sdl.SDL_GPU_FILLMODE_FILL },
         };
 
-        graphics_pipeline_create_info.rasterizer_state.fill_mode = sdl.SDL_GPU_FILLMODE_FILL;
         const fill_pipeline: ?*sdl.SDL_GPUGraphicsPipeline = sdl.SDL_CreateGPUGraphicsPipeline(gpu_context, &graphics_pipeline_create_info);
         if (fill_pipeline == null) {
             std.log.err("Failed to create fill pipeline: {s}", .{Error.sdlError()});
             return error.FailedToCreateFillPipeline;
         }
 
-        const graphics_pipeline = sdl.SDL_CreateGPUGraphicsPipeline(gpu_context, &graphics_pipeline_create_info);
-        if (graphics_pipeline == null) {
-            std.log.err("Failed to create graphics pipeline: {s}.", .{Error.sdlError()});
-            return error.FailedToCreateGraphicsPipeline;
-        }
-
-        graphics_pipeline_create_info.rasterizer_state.fill_mode = sdl.SDL_GPU_FILLMODE_LINE;
-        const line_pipeline = sdl.SDL_CreateGPUGraphicsPipeline(gpu_context, &graphics_pipeline_create_info);
-        if (line_pipeline == null) {
-            std.log.err("Failed to create line pipeline: {s}.", .{Error.sdlError()});
-            return error.FailedToCreateLinePipeline;
-        }
-
-        return graphics_pipeline.?;
+        return fill_pipeline.?;
     }
 
     fn drawSwapchain(command_buffer: *sdl.SDL_GPUCommandBuffer, window: *sdl.SDL_Window, graphics_pipeline: *sdl.SDL_GPUGraphicsPipeline) !void {
