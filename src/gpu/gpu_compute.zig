@@ -32,10 +32,9 @@ pub const GPUCompute = struct {
         }
         const window_ptr = window.?;
 
-        sdl.SDL_GetRenderDriver(index: c_int)
-
         const gpu_context = try self.createDevice();
         try claimWindow(gpu_context, window);
+
         const command_buffer = try aquireGPUCommandBuffer(gpu_context);
         const copy_pass = try beginGPUCopyPass(command_buffer);
         const gpu_buffer = try createGPUBuffer(gpu_context);
