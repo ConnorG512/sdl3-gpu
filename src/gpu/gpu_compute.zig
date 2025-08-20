@@ -32,6 +32,8 @@ pub const GPUCompute = struct {
         }
         const window_ptr = window.?;
 
+        sdl.SDL_GetRenderDriver(index: c_int)
+
         const gpu_context = try self.createDevice();
         try claimWindow(gpu_context, window);
         const command_buffer = try aquireGPUCommandBuffer(gpu_context);
@@ -54,7 +56,7 @@ pub const GPUCompute = struct {
         
         try drawSwapchain(command_buffer, window_ptr, graphics_pipeline);
 
-        // GPUQuit(gpu_context, window_ptr);
+        GPUQuit(gpu_context, window_ptr);
     }
 
     fn createDevice(self: *GPUCompute) GPUError!*sdl.SDL_GPUDevice{
