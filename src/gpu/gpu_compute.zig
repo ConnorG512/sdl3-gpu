@@ -3,6 +3,7 @@ const Error = @import("../core/error_handling.zig").ErrorHandle;
 const sdl = @cImport(@cInclude("SDL3/SDL.h"));
 
 const GPUError = error {
+    WindowIsNull,
     FailedToCreateContext,
     CannotClaimWindow,
     FailedToCreateShaderObject,
@@ -11,6 +12,8 @@ const GPUError = error {
     FailedToCreateGraphicsPipeline,
     FailedToGetCopyPass,
     FailedToCreateTransferBuffer,
+    FailedToCreateFillPipeline,
+    FailedToCreateLinePipeline,
 };
 
 
@@ -23,7 +26,10 @@ pub const GPUCompute = struct {
     enable_validation_layers: bool = true,
 
     pub fn startGPU(self: *GPUCompute, window: ?*sdl.SDL_Window) !void {
-        std.debug.assert(window != null);
+        if (window == null) {
+            return error.WindowIsNull;
+        }
+        const window_ptr = window.?;
 
         const gpu_context = try self.createDevice();
         try claimWindow(gpu_context, window);
@@ -33,12 +39,17 @@ pub const GPUCompute = struct {
 
         const frag_file = comptime ptrToEmbedFile("../shader/vert.spv");
         const vert_file = comptime ptrToEmbedFile("../shader/frag.spv");
+
         const vertex_shader = try createGPUShader(gpu_context, vert_file, sdl.SDL_GPU_SHADERSTAGE_VERTEX);
+        defer releaseShaders(gpu_context, vertex_shader);
+
         const fragment_shader = try createGPUShader(gpu_context, frag_file, sdl.SDL_GPU_SHADERSTAGE_FRAGMENT);
+        defer releaseShaders(gpu_context, fragment_shader);
+        
         const transfer_buffer = try createGPUTransferBuffer(gpu_context);
 
         uploadToGPUBuffer(copy_pass, transfer_buffer, gpu_buffer);
-        _ = try createGPUGraphicsPipeline(gpu_context, vertex_shader, fragment_shader);
+        _ = try createGPUGraphicsPipeline(gpu_context, window_ptr, vertex_shader, fragment_shader);
     }
 
     fn createDevice(self: *GPUCompute) GPUError!*sdl.SDL_GPUDevice{
@@ -147,72 +158,48 @@ pub const GPUCompute = struct {
         sdl.SDL_UploadToGPUBuffer(copy_pass, &gpu_transfer_buffer_location, &gpu_buffer_reigon, true);
     }
 
-    fn createGPUGraphicsPipeline(gpu_context: *sdl.SDL_GPUDevice, vertex_shader: *sdl.SDL_GPUShader, fragment_shader: *sdl.SDL_GPUShader) GPUError!*sdl.SDL_GPUGraphicsPipeline {
+    fn createGPUGraphicsPipeline(gpu_context: *sdl.SDL_GPUDevice, window: *sdl.SDL_Window, vertex_shader: *sdl.SDL_GPUShader, fragment_shader: *sdl.SDL_GPUShader) GPUError!*sdl.SDL_GPUGraphicsPipeline {
 
         const color_target_descriptions: sdl.SDL_GPUColorTargetDescription = .{
-            .blend_state = .{
-                .enable_blend = false,
-            }
+            .format = sdl.SDL_GetGPUSwapchainTextureFormat(gpu_context, window),
         }; 
 
-        const gpu_vertex_attributes: sdl.SDL_GPUVertexAttribute = .{
-            .buffer_slot = undefined,
-            .format = undefined,
-            .location = undefined,
-            .offset = undefined,
-        };
-
-        const graphics_pipeline_create_info: sdl.SDL_GPUGraphicsPipelineCreateInfo = .{
+        var graphics_pipeline_create_info: sdl.SDL_GPUGraphicsPipelineCreateInfo = .{
             .target_info = .{
                 .num_color_targets = 1,
-                .has_depth_stencil_target = false,
-                .depth_stencil_format = sdl.SDL_GPU_TEXTUREFORMAT_A8_UNORM,
                 .color_target_descriptions = &color_target_descriptions,
             },
 
+            .primitive_type = sdl.SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
             .vertex_shader = vertex_shader,
             .fragment_shader = fragment_shader,
-
-            .depth_stencil_state = .{
-                .compare_op = undefined,
-                .back_stencil_state = undefined,
-                .enable_stencil_test = undefined,
-                .enable_depth_write = undefined,
-                .enable_depth_test = undefined,
-                .compare_mask = undefined,
-                .front_stencil_state = undefined,
-                .write_mask = undefined,
-            },
-            
-            .vertex_input_state = .{
-                .num_vertex_attributes = 3,
-                .num_vertex_buffers = 3,
-                .vertex_attributes = &gpu_vertex_attributes,
-                .vertex_buffer_descriptions = undefined,
-            },
-
-            .rasterizer_state = .{
-                .cull_mode = undefined,
-                .depth_bias_clamp = undefined,
-                .depth_bias_constant_factor = undefined,
-                .depth_bias_slope_factor = undefined,
-                .enable_depth_bias = undefined,
-                .enable_depth_clip = undefined,
-                .fill_mode = undefined,
-                .front_face = undefined,
-            },
-            
-            .primitive_type = undefined,
-            .multisample_state = undefined,
-            .props = 0,
         };
+
+        graphics_pipeline_create_info.rasterizer_state.fill_mode = sdl.SDL_GPU_FILLMODE_FILL;
+        const fill_pipeline: ?*sdl.SDL_GPUGraphicsPipeline = sdl.SDL_CreateGPUGraphicsPipeline(gpu_context, &graphics_pipeline_create_info);
+        if (fill_pipeline == null) {
+            std.log.err("Failed to create fill pipeline: {s}", .{Error.sdlError()});
+            return error.FailedToCreateFillPipeline;
+        }
 
         const graphics_pipeline = sdl.SDL_CreateGPUGraphicsPipeline(gpu_context, &graphics_pipeline_create_info);
         if (graphics_pipeline == null) {
             std.log.err("Failed to create graphics_pipeline: {s}.", .{Error.sdlError()});
-
+            return error.FailedToCreateGraphicsPipeline;
         }
+
+        graphics_pipeline_create_info.rasterizer_state.fill_mode = sdl.SDL_GPU_FILLMODE_LINE;
+        const line_pipeline = sdl.SDL_CreateGPUGraphicsPipeline(gpu_context, &graphics_pipeline_create_info);
+        if (line_pipeline == null) {
+            std.log.err("Failed to create graphics_pipeline: {s}.", .{Error.sdlError()});
+            return error.FailedToCreateLinePipeline;
+        }
+
         return graphics_pipeline.?;
+    }
+
+    fn releaseShaders(gpu_context: *sdl.SDL_GPUDevice, shader: *sdl.SDL_GPUShader) void {
+        sdl.SDL_ReleaseGPUShader(gpu_context, shader);
     }
 
 };
