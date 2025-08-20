@@ -36,21 +36,24 @@ pub const GPUCompute = struct {
         try claimWindow(gpu_context, window);
 
         const command_buffer = try aquireGPUCommandBuffer(gpu_context);
-        const copy_pass = try beginGPUCopyPass(command_buffer);
-        const gpu_buffer = try createGPUBuffer(gpu_context);
 
+        const copy_pass = try beginGPUCopyPass(command_buffer);
+        const transfer_buffer = try createGPUTransferBuffer(gpu_context);
+        const gpu_buffer = try createGPUBuffer(gpu_context);
+        uploadToGPUBuffer(copy_pass, transfer_buffer, gpu_buffer);
+        sdl.SDL_EndGPUCopyPass(copy_pass);
+
+        // Embedding shaders
         const frag_file = comptime ptrToEmbedFile("../shader/frag.spv");
         const vert_file = comptime ptrToEmbedFile("../shader/vert.spv");
 
+        // Create shaders
         const vertex_shader = try createGPUShader(gpu_context, vert_file, sdl.SDL_GPU_SHADERSTAGE_VERTEX);
         defer releaseShaders(gpu_context, vertex_shader);
-
         const fragment_shader = try createGPUShader(gpu_context, frag_file, sdl.SDL_GPU_SHADERSTAGE_FRAGMENT);
         defer releaseShaders(gpu_context, fragment_shader);
         
-        const transfer_buffer = try createGPUTransferBuffer(gpu_context);
 
-        uploadToGPUBuffer(copy_pass, transfer_buffer, gpu_buffer);
         const graphics_pipeline = try createGPUGraphicsPipeline(gpu_context, window_ptr, vertex_shader, fragment_shader);
         
         try drawSwapchain(command_buffer, window_ptr, graphics_pipeline);
