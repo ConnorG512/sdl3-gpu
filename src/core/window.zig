@@ -16,7 +16,7 @@ pub const Window = struct {
     window_height: c_int = 480,
     window: ?*sdl.SDL_Window = null,
     renderer: ?*sdl.SDL_Renderer = null,
-    window_title: [:0]const u8 = "Mobile Game",
+    window_title: [:0]const u8 = "SDL Window",
 
     pub fn renderClear(self: *Window) !void {
         const render_clear_res = sdl.SDL_RenderClear(self.renderer);
