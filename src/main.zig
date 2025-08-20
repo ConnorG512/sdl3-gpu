@@ -31,17 +31,21 @@ pub fn main() !void {
         std.log.err("SDL Error: {s}.", .{erh.sdlError()});
         return error.CouldNotCreateAppMetadata;
     }
-
+    
     try win_ren.createWinRen();
     try win_ren.renderClear();
     try win_ren.renderPresent();
 
+    var gpu = GPU {
+        .application_window = win_ren.window.?,
+    };
+    try gpu.initialiseGPU();
+
     var input_handler = Input {};
-    var gpu = GPU {};
 
     while (true) {
         input_handler.pollForEvent();
-        try gpu.startGPU(win_ren.window);
+        try gpu.renderLoop();
     }
 
    

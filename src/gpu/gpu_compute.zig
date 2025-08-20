@@ -25,38 +25,36 @@ fn ptrToEmbedFile(filepath: []const u8) []const u8 {
 
 pub const GPUCompute = struct {
     enable_validation_layers: bool = true,
+    application_window: *sdl.SDL_Window = undefined,
+    gpu_context: *sdl.SDL_GPUDevice = undefined,
+    vertex_shader: *sdl.SDL_GPUShader = undefined,
+    fragment_shader: *sdl.SDL_GPUShader = undefined,
 
-    pub fn startGPU(self: *GPUCompute, window: ?*sdl.SDL_Window) !void {
-        if (window == null) {
-            return error.WindowIsNull;
-        }
-        const window_ptr = window.?;
-
-        const gpu_context = try self.createDevice();
-        try claimWindow(gpu_context, window);
-
-        const command_buffer = try aquireGPUCommandBuffer(gpu_context);
-
-        const copy_pass = try beginGPUCopyPass(command_buffer);
-        const transfer_buffer = try createGPUTransferBuffer(gpu_context);
-        const gpu_buffer = try createGPUBuffer(gpu_context);
-        uploadToGPUBuffer(copy_pass, transfer_buffer, gpu_buffer);
-        sdl.SDL_EndGPUCopyPass(copy_pass);
-
+    pub fn initialiseGPU(self: *GPUCompute) !void {
+        self.gpu_context = try self.createDevice();
+        try claimWindow(self.gpu_context, self.application_window);
+        
         // Embedding shaders
         const frag_file = comptime ptrToEmbedFile("../shader/frag.spv");
         const vert_file = comptime ptrToEmbedFile("../shader/vert.spv");
 
         // Create shaders
-        const vertex_shader = try createGPUShader(gpu_context, vert_file, sdl.SDL_GPU_SHADERSTAGE_VERTEX);
-        defer releaseShaders(gpu_context, vertex_shader);
-        const fragment_shader = try createGPUShader(gpu_context, frag_file, sdl.SDL_GPU_SHADERSTAGE_FRAGMENT);
-        defer releaseShaders(gpu_context, fragment_shader);
-        
+        self.vertex_shader = try createGPUShader(self.gpu_context, vert_file, sdl.SDL_GPU_SHADERSTAGE_VERTEX);
+        self.fragment_shader = try createGPUShader(self.gpu_context, frag_file, sdl.SDL_GPU_SHADERSTAGE_FRAGMENT);
+    }
 
-        const graphics_pipeline = try createGPUGraphicsPipeline(gpu_context, window_ptr, vertex_shader, fragment_shader);
+    pub fn renderLoop(self: *GPUCompute) !void {
+        const command_buffer = try aquireGPUCommandBuffer(self.gpu_context);
+
+        const copy_pass = try beginGPUCopyPass(command_buffer);
+        const transfer_buffer = try createGPUTransferBuffer(self.gpu_context);
+        const gpu_buffer = try createGPUBuffer(self.gpu_context);
+        uploadToGPUBuffer(copy_pass, transfer_buffer, gpu_buffer);
+        sdl.SDL_EndGPUCopyPass(copy_pass);
+
+        const graphics_pipeline = try createGPUGraphicsPipeline(self.gpu_context, self.application_window, self.vertex_shader, self.fragment_shader);
         
-        try drawSwapchain(command_buffer, window_ptr, graphics_pipeline);
+        try drawSwapchain(command_buffer, self.application_window, graphics_pipeline);
 
         // GPUQuit(gpu_context, window_ptr);
     }
