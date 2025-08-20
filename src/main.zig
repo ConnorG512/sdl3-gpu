@@ -37,9 +37,12 @@ pub fn main() !void {
     try win_ren.renderPresent();
 
     var input_handler = Input {};
-
-    input_handler.pollForEvent();
-   
     var gpu = GPU {};
-    try gpu.startGPU(win_ren.window);
+
+    while (true) {
+        input_handler.pollForEvent();
+        try gpu.startGPU(win_ren.window);
+    }
+
+   
 }
